@@ -24,8 +24,9 @@
 package org.spongepowered.mod.event;
 
 import cpw.mods.fml.common.eventhandler.EventBus;
+
+import org.spongepowered.api.event.Event;
 import org.spongepowered.api.event.EventManager;
-import org.spongepowered.api.event.SpongeEvent;
 
 public class SpongeEventManager implements EventManager {
     private final EventBus spongeBus = new EventBus();
@@ -41,7 +42,7 @@ public class SpongeEventManager implements EventManager {
     }
 
     @Override
-    public boolean call(SpongeEvent spongeEvent) {
+    public boolean call(Event spongeEvent) {
         return spongeBus.post(new SpongeProxyEvent(spongeEvent));
     }
 }
