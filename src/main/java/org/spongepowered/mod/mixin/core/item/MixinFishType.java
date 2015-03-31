@@ -1,7 +1,8 @@
-/**
+/*
  * This file is part of Sponge, licensed under the MIT License (MIT).
  *
- * Copyright (c) 2014 SpongePowered <http://spongepowered.org/>
+ * Copyright (c) SpongePowered.org <http://www.spongepowered.org>
+ * Copyright (c) contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,28 +22,34 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.mod.event;
 
-import cpw.mods.fml.common.eventhandler.EventBus;
+package org.spongepowered.mod.mixin.core.item;
 
-import org.spongepowered.api.event.Event;
-import org.spongepowered.api.event.EventManager;
+import static org.spongepowered.api.service.persistence.data.DataQuery.of;
 
-public class SpongeEventManager implements EventManager {
-    private final EventBus spongeBus = new EventBus();
+import net.minecraft.item.ItemFishFood;
+import org.spongepowered.api.item.Fish;
+import org.spongepowered.api.service.persistence.data.DataContainer;
+import org.spongepowered.api.service.persistence.data.DataQuery;
+import org.spongepowered.api.service.persistence.data.MemoryDataContainer;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+
+@Mixin(ItemFishFood.FishType.class)
+public class MixinFishType implements Fish {
+
+    @Shadow
+    private String unlocalizedName;
 
     @Override
-    public void register(Object o) {
-        spongeBus.register(o);
+    public String getId() {
+        return "raw." + this.unlocalizedName;
     }
 
     @Override
-    public void unregister(Object o) {
-        spongeBus.unregister(o);
-    }
-
-    @Override
-    public boolean call(Event spongeEvent) {
-        return spongeBus.post(new SpongeProxyEvent(spongeEvent));
+    public DataContainer toContainer() {
+        DataContainer container = new MemoryDataContainer();
+        container.set(of("FishType"), this.unlocalizedName);
+        return container;
     }
 }

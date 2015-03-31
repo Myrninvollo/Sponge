@@ -1,7 +1,8 @@
-/**
+/*
  * This file is part of Sponge, licensed under the MIT License (MIT).
  *
- * Copyright (c) 2014 SpongePowered <http://spongepowered.org/>
+ * Copyright (c) SpongePowered.org <http://www.spongepowered.org>
+ * Copyright (c) contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,14 +24,32 @@
  */
 package org.spongepowered.mod;
 
+import net.minecraft.launchwrapper.Launch;
+import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
+import org.spongepowered.asm.launch.MixinBootstrap;
+import org.spongepowered.asm.mixin.MixinEnvironment;
+
 import java.util.Map;
 
-import cpw.mods.fml.relauncher.IFMLLoadingPlugin;
-
 public class SpongeCoremod implements IFMLLoadingPlugin {
+
+    public SpongeCoremod() {
+        MixinBootstrap.init();
+        MixinEnvironment env = MixinEnvironment.getCurrentEnvironment();
+        env.addConfiguration("mixins.sponge.core.json");
+        env.addConfiguration("mixins.sponge.api.json");
+        env.addConfiguration("mixins.sponge.entityactivation.json");
+
+        // Transformer exclusions
+        Launch.classLoader.addTransformerExclusion("ninja.leaping.configurate");
+        Launch.classLoader.addTransformerExclusion("org.apache.commons.lang3");
+    }
+
     @Override
     public String[] getASMTransformerClass() {
-        return new String[0];
+        return new String[] {
+                MixinBootstrap.TRANSFORMER_CLASS,
+        };
     }
 
     @Override
@@ -49,7 +68,7 @@ public class SpongeCoremod implements IFMLLoadingPlugin {
 
     @Override
     public String getAccessTransformerClass() {
-        return null;
+        return "org.spongepowered.mod.asm.transformers.SpongeAccessTransformer";
     }
 
 }

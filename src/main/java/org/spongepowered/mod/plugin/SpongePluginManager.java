@@ -1,7 +1,8 @@
-/**
+/*
  * This file is part of Sponge, licensed under the MIT License (MIT).
  *
- * Copyright (c) 2014 SpongePowered <http://spongepowered.org/>
+ * Copyright (c) SpongePowered.org <http://www.spongepowered.org>
+ * Copyright (c) contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,27 +24,47 @@
  */
 package org.spongepowered.mod.plugin;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableSet;
+import net.minecraftforge.fml.common.Loader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.plugin.PluginManager;
-import org.spongepowered.mod.SpongeMod;
+import org.spongepowered.api.util.annotation.NonnullByDefault;
 
 import java.util.Collection;
+import java.util.List;
 
+@NonnullByDefault
 public class SpongePluginManager implements PluginManager {
+
     @Override
-    public PluginContainer getPlugin(String s) {
-        return SpongeMod.instance.getPlugin(s);
+    public Optional<PluginContainer> getPlugin(String s) {
+        return Optional.fromNullable((PluginContainer) Loader.instance().getIndexedModList().get(s));
     }
 
     @Override
     public Logger getLogger(PluginContainer pluginContainer) {
-        return LogManager.getLogger(pluginContainer.getName());
+        return LoggerFactory.getLogger(pluginContainer.getId());
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Collection<PluginContainer> getPlugins() {
-        return SpongeMod.instance.getPlugins();
+        return ImmutableSet.copyOf((List) Loader.instance().getActiveModList());
+    }
+
+    @Override
+    public Optional<PluginContainer> fromInstance(Object instance) {
+        if (instance instanceof PluginContainer) {
+            return Optional.of((PluginContainer) instance);
+        }
+        return Optional.fromNullable((PluginContainer) Loader.instance().getReversedModObjectList().get(instance));
+    }
+
+    @Override
+    public boolean isLoaded(String s) {
+        return Loader.isModLoaded(s);
     }
 }

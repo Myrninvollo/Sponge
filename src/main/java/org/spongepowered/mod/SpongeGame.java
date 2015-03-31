@@ -1,7 +1,8 @@
-/**
+/*
  * This file is part of Sponge, licensed under the MIT License (MIT).
  *
- * Copyright (c) 2014 SpongePowered <http://spongepowered.org/>
+ * Copyright (c) SpongePowered.org <http://www.spongepowered.org>
+ * Copyright (c) contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,38 +24,47 @@
  */
 package org.spongepowered.mod;
 
-import java.util.Collection;
-import java.util.UUID;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.google.common.base.Optional;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.GameRegistry;
+import org.spongepowered.api.MinecraftVersion;
 import org.spongepowered.api.Platform;
-import org.spongepowered.api.entity.Player;
-import org.spongepowered.api.event.EventManager;
+import org.spongepowered.api.Server;
 import org.spongepowered.api.plugin.PluginManager;
-import org.spongepowered.api.world.World;
-import org.spongepowered.mod.event.SpongeEventManager;
-import org.spongepowered.mod.plugin.SpongePluginManager;
+import org.spongepowered.api.service.ServiceManager;
+import org.spongepowered.api.service.command.CommandService;
+import org.spongepowered.api.service.event.EventManager;
+import org.spongepowered.api.service.scheduler.AsynchronousScheduler;
+import org.spongepowered.api.service.scheduler.SynchronousScheduler;
+import org.spongepowered.api.util.annotation.NonnullByDefault;
+import org.spongepowered.mod.service.scheduler.AsyncScheduler;
+import org.spongepowered.mod.service.scheduler.SyncScheduler;
 
-import cpw.mods.fml.common.FMLCommonHandler;
+import javax.annotation.Nullable;
+import javax.inject.Inject;
 
+@NonnullByDefault
 public final class SpongeGame implements Game {
+
+    @Nullable
     private static final String apiVersion = Game.class.getPackage().getImplementationVersion();
+    @Nullable
     private static final String implementationVersion = SpongeGame.class.getPackage().getImplementationVersion();
-    private final Logger logger = LogManager.getLogger("sponge");
-    private final SpongePluginManager pluginManager;
-    private final SpongeEventManager eventManager;
 
-    public SpongeGame() {
-        this.pluginManager = new SpongePluginManager();
-        this.eventManager = new SpongeEventManager();
-    }
+    private static final MinecraftVersion MINECRAFT_VERSION = new SpongeMinecraftVersion("1.8", 47); // TODO: Keep updated
 
-    @Override
-    public Logger getLogger() {
-        return logger;
+    private final PluginManager pluginManager;
+    private final EventManager eventManager;
+    private final GameRegistry gameRegistry;
+    private final ServiceManager serviceManager;
+
+    @Inject
+    public SpongeGame(PluginManager plugin, EventManager event, GameRegistry registry, ServiceManager service) {
+        this.pluginManager = plugin;
+        this.eventManager = event;
+        this.gameRegistry = registry;
+        this.serviceManager = service;
     }
 
     @Override
@@ -69,35 +79,16 @@ public final class SpongeGame implements Game {
 
     @Override
     public PluginManager getPluginManager() {
-        return pluginManager;
+        return this.pluginManager;
     }
 
     @Override
     public EventManager getEventManager() {
-        return eventManager;
+        return this.eventManager;
     }
 
     @Override
-    public Collection<World> getWorlds() {
-        return null;
-    }
-
-    @Override
-    public World getWorld(UUID uniqueId) {
-        return null;
-    }
-
-    @Override
-    public World getWorld(String worldName) {
-        return null;
-    }
-
-    @Override
-    public void broadcastMessage(String message) {
-
-    }
-
-    public String getAPIVersion() {
+    public String getApiVersion() {
         return apiVersion != null ? apiVersion : "UNKNOWN";
     }
 
@@ -107,22 +98,37 @@ public final class SpongeGame implements Game {
     }
 
     @Override
+    public MinecraftVersion getMinecraftVersion() {
+        return MINECRAFT_VERSION;
+    }
+
+    @Override
     public GameRegistry getRegistry() {
-        throw new UnsupportedOperationException();
+        return this.gameRegistry;
     }
 
     @Override
-    public Collection<Player> getOnlinePlayers() {
-        throw new UnsupportedOperationException();
+    public ServiceManager getServiceManager() {
+        return this.serviceManager;
     }
 
     @Override
-    public int getMaxPlayers() {
-        throw new UnsupportedOperationException();
+    public SynchronousScheduler getSyncScheduler() {
+        return SyncScheduler.getInstance();
     }
 
     @Override
-    public Player getPlayer(UUID uniqueId) {
-        throw new UnsupportedOperationException();
+    public AsynchronousScheduler getAsyncScheduler() {
+        return AsyncScheduler.getInstance();
+    }
+
+    @Override
+    public CommandService getCommandDispatcher() {
+        return this.serviceManager.provideUnchecked(CommandService.class);
+    }
+
+    @Override
+    public Optional<Server> getServer() {
+        return Optional.fromNullable((Server) FMLCommonHandler.instance().getMinecraftServerInstance());
     }
 }
